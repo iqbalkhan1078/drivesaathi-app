@@ -1,0 +1,1 @@
+Clean rebuild from Phase-5 working-login base. First verify Login. Then Admin > Manage Bookings should show Drivers loaded count and dropdown. No auth code was rewritten.

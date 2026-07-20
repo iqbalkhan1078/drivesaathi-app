@@ -1,0 +1,1 @@
+Phase-5: Customer sees quote, Accept/Reject, chooses UPI/Card/Net Banking/Cash. Online payment is test mode only; no real money charged. Requires existing Phase-5 booking columns. Test temporarily before production.

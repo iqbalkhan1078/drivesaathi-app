@@ -1,0 +1,1 @@
+Fix: My Assignments now checks driver_response=accepted/rejected before status=driver_assignment_pending, so accepted jobs show Start Trip even while booking status remains pending.

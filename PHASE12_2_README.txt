@@ -1,0 +1,1 @@
+Phase-12.2 Publish as Vacancy TEST. Requires publish_booking_as_job RPC. Test Admin permanent/monthly booking -> Publish as Vacancy -> Driver Find Jobs.
