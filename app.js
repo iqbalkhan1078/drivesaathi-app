@@ -368,6 +368,7 @@ openPublishVacancy=openDetailedPublishVacancy;
 
 publishVacancyNow=async function(){
  const id=$("#pvBookingId").value,title=$("#pvTitle").value.trim();
+ alert("Booking ID sent: " + id);
  if(!id||!title){alert("Booking and Job Title are required.");return}
  const min=Number($("#pvSalaryMin").value||0),max=Number($("#pvSalaryMax").value||0);
  if(min&&max&&max<min){alert("Salary Max cannot be less than Salary Min.");return}
