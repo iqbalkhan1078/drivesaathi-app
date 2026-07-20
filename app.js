@@ -237,6 +237,7 @@ async function openWorkflow(){
 }
 async function renderFlowControls(id,b=null){
  if(!b){let r=await sb.from("bookings").select("*").eq("id",id).single();if(r.error)return;b=r.data}
+alert("ID: "+id+"\nERROR: "+(r.error?.message||"NONE")+"\nDATA: "+JSON.stringify(r.data));
  let flow=$("#flow_"+id).value,box=$("#fc_"+id);
  if(flow==="job_placement"){
   box.innerHTML=`<div class="flowSteps"><b>Placement Flow</b><p>Requirement → Match/Select → Fees → Contact Unlock → Connected → Close</p>
