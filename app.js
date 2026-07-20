@@ -15,7 +15,7 @@ async function loadApps(){let {data,error}=await sb.from("job_applications").sel
 
 async function loadAdminBookings(){setTimeout(()=>injectDriverSelectors(),300);
  let {data,error}=await sb.from("bookings").select("*").order("created_at",{ascending:false});
- $("#adminBookingsList").innerHTML=error?`<p>${esc(error.message)}</p>`:(data||[]).map(b=>`<div class="item">
+ $("#adminBookingsList").innerHTML=error?`<p>${esc(error.message)}</p>`:(data||[]).map(b=>`<div class="item" data-booking-id="${b.id}">
  <b>${esc(b.service_type)}</b><p>${esc(b.requirement_location||"")} · ${esc(b.vehicle_type||"")}</p>
  <label>Status<select id="st_${b.id}"><option>pending</option><option>quote_sent</option><option>customer_accepted</option><option>payment_pending</option><option>paid</option><option>driver_assigned</option><option>in_progress</option><option>completed</option><option>cancelled</option></select></label>
  <label>Quote / Final Price<input id="q_${b.id}" placeholder="e.g. 1200"></label>
@@ -332,7 +332,7 @@ function enhancePermanentBookingCards(){
       }
     }
     // Last resort: use a UUID embedded in card markup/attributes.
-    let id=booking?.id || card.dataset.bookingId || card.getAttribute("data-id");
+    let id=card.dataset.bookingId || booking?.id || card.getAttribute("data-id");
     if(!id){
       const m=card.outerHTML.match(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i);
       if(m) id=m[0];
