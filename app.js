@@ -345,7 +345,7 @@ function enhancePermanentBookingCards(){
     wrap.innerHTML=`<h3>Permanent Driver Hiring</h3>
       <p class="hint">Publish this requirement to Driver → Find Jobs. Applications can then be reviewed before selecting a driver.</p>
       <button class="primary publishVacancyBtn">Publish as Vacancy</button>`;
-    wrap.querySelector("button").onclick=()=>openPublishVacancy(id);
+    wrap.querySelector("button").onclick=()=>openDetailedPublishVacancy(id);
     card.appendChild(wrap);
   });
 }
