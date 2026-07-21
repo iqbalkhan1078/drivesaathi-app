@@ -120,7 +120,7 @@ async function updateJobApplication(applicationId,status){
   }
 
   alert(
-    status==="accepted"
+    status==="selected"
       ?"Driver selected successfully."
       :"Application rejected."
   );
