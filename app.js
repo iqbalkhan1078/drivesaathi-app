@@ -76,7 +76,7 @@ if(driverIds.length){
           <p><b>Profile:</b> ${esc(dp.driver_type||"Not specified")} · Licence: ${esc(dp.licence_classes||"Not specified")} · Experience: ${esc(dp.experience_years??"Not specified")} years · Availability: ${esc(dp.availability||"Not specified")} · Expected Rate: ${esc(dp.expected_rate||"Not specified")}</p>
 
           <button class="primary"
-            onclick="updateJobApplication('${a.id}','accepted')">
+            onclick="updateJobApplication('${a.id}','selected')">
             Accept / Select Driver
           </button>
 
