@@ -355,7 +355,6 @@ async function openDetailedPublishVacancy(id){
  closeP();$("#pvBookingId").value=id;
  let r=await sb.from("bookings").select("*").eq("id",id).single();
  let b=r.data||{};
- alert("ID: "+id+"\nERROR: "+(r.error?.message||"NONE")+"\nDATA: "+JSON.stringify(r.data));
  $("#pvTitle").value=b.job_title||"Driver Required";$("#pvSalary").value="";
  $("#pvVehicle").value=b.vehicle_type||"";$("#pvSalaryMin").value=b.salary_min||"";$("#pvSalaryMax").value=b.salary_max||"";
  $("#pvDutyType").value=b.duty_type||"Full-time";$("#pvDutyHours").value=b.duty_hours||"";$("#pvShift").value=b.shift_type||"Day";
