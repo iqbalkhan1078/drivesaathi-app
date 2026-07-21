@@ -53,17 +53,27 @@ async function loadAdminJobs(){
     console.error("Application load error:",appError);
     apps=[];
   }
+const driverIds=[...new Set((apps||[]).map(a=>a.driver_id).filter(Boolean))];
+let driverProfiles=[];
 
+if(driverIds.length){
+  const {data:dpData,error:dpError}=await sb
+    .from("driver_profiles")
+    .select("*")
+    .in("user_id",driverIds);
+
+  if(!dpError) driverProfiles=dpData||[];
+}
   $("#adminJobsList").innerHTML=(jobs||[]).map(j=>{
     const jobApps=(apps||[]).filter(a=>a.job_id===j.id);
 
     const applications=jobApps.length
-      ? jobApps.map(a=>`
+      ? jobApps.map(a=>{ const dp=driverProfiles.find(d=>d.user_id===a.driver_id)||{}; return ``
         <div class="item" style="margin-top:10px">
           <b>Driver Application</b>
           <p>Status: ${esc(a.status||"applied")}</p>
           <p>Driver ID: ${esc(a.driver_id||"")}</p>
-<p><b>Applicant profile:</b> Personal · HMV Licence · 5 Years Experience · Full-time · ₹800/day</p>
+          <p><b>Profile:</b> ${esc(dp.driver_type||"Not specified")} · Licence: ${esc(dp.licence_classes||"Not specified")} · Experience: ${esc(dp.experience_years??"Not specified")} years · Availability: ${esc(dp.availability||"Not specified")} · Expected Rate: ${esc(dp.expected_rate||"Not specified")}</p>
 
           <button class="primary"
             onclick="updateJobApplication('${a.id}','accepted')">
@@ -75,7 +85,7 @@ async function loadAdminJobs(){
             Reject
           </button>
         </div>
-      `).join("")
+      `}).join("")
       : `<p>No applications yet.</p>`;
 
     return `
