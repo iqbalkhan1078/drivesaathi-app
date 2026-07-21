@@ -6,13 +6,92 @@ $("#bookingForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.fro
 $("#jobForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("jobs").insert({employer_id:u.id,title:$("#jobTitle").value,location:$("#jobLocation").value,salary_rate:$("#salaryRate").value,details:$("#jobDetails").value});$("#jobMsg").textContent=error?error.message:"Job posted successfully.";if(!error)e.target.reset()};
 $("#driverForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("driver_profiles").upsert({user_id:u.id,driver_type:$("#driverType").value.toLowerCase(),licence_classes:$("#licence").value,experience_years:Number($("#exp").value||0),availability:$("#avail").value,expected_rate:$("#rate").value});$("#driverMsg").textContent=error?error.message:"Driver profile saved successfully.";if(!error)loadDriver()};
 async function loadDriver(){let {data}=await sb.from("driver_profiles").select("*").eq("user_id",u.id).maybeSingle();if(!data)return;$("#licence").value=data.licence_classes||"";$("#exp").value=data.experience_years||0;$("#avail").value=data.availability||"Available Now";$("#rate").value=data.expected_rate||"";$("#verify").textContent=data.verification_status||"pending"}
-async function loadJobs(){let {data,error}=await sb.from("jobs").select("*").eq("is_active",true).order("created_at",{ascending:false});$("#jobsList").innerHTML=error?error.message:(data||[]).map(j=>`<div class="item"><b>${esc(j.title)}</b><p>${esc(j.location)} · ${esc(j.salary_rate||"Rate not specified")}</p><button class="primary" onclick="applyJob('${j.id}')">Apply</button></div>`).join("")||"<p>No active jobs.</p>"}
+async function loadJobs(){
+  let {data,error}=await sb
+    .from("jobs")
+    .select("*")
+    .eq("is_active",true)
+    .order("created_at",{ascending:false});
+
+  if(error){
+    $("#jobsList").innerHTML=esc(error.message);
+    return;
+  }
+
+  let {data:myApps,error:appError}=await sb
+    .from("job_applications")
+    .select("job_id,status")
+    .eq("driver_id",u.id);
+
+  if(appError) myApps=[];
+
+  $("#jobsList").innerHTML=(data||[]).map(j=>{
+    const application=(myApps||[]).find(a=>a.job_id===j.id);
+
+    let action=`<button class="primary" onclick="applyJob('${j.id}')">Apply</button>`;
+
+    if(application){
+      if(application.status==="selected"){
+        action=`<p><b>🎉 You have been selected for this job!</b></p>`;
+      }else if(application.status==="rejected"){
+        action=`<p><b>Application Status:</b> Rejected</p>`;
+      }else{
+        action=`<p><b>Application Status:</b> ${esc(application.status)}</p>`;
+      }
+    }
+
+    return `<div class="item">
+      <b>${esc(j.title)}</b>
+      <p>${esc(j.location)} · ${esc(j.salary_rate||"Rate not specified")}</p>
+      ${action}
+    </div>`;
+  }).join("")||"<p>No active jobs.</p>";
+}
 async function applyJob(id){let {error}=await sb.from("job_applications").insert({job_id:id,driver_id:u.id});alert(error?(error.code==="23505"?"Already applied.":error.message):"Application submitted.")}
 async function loadBookings(){let {data,error}=await sb.from("bookings").select("*").eq("customer_id",u.id).order("created_at",{ascending:false});if(error){$("#bookingsList").innerHTML=esc(error.message);return}$("#bookingsList").innerHTML=(data||[]).map(x=>{let q=x.quoted_amount!=null?`<p class="quote">DriveSaathi Quote: <b>₹${esc(x.quoted_amount)}</b></p>`:"";let r=x.quote_response||"";let act=(x.status==="quote_sent"&&!r)?`<div class="actions"><button class="primary" onclick="respondQuote('${x.id}','accepted')">Accept Quote</button><button class="danger" onclick="respondQuote('${x.id}','rejected')">Reject Quote</button></div>`:"";let pay=(r==="accepted"||x.status==="customer_accepted"||x.status==="payment_pending")?`<div class="paychoice"><b>Choose Payment Method</b><select id="pay_${x.id}"><option value="">Select</option><option value="upi">UPI</option><option value="card">Card</option><option value="net_banking">Net Banking</option><option value="cash">Cash / Pay after service</option></select><button onclick="savePaymentChoice('${x.id}')">Confirm Method</button><small>Test mode — no money charged.</small></div>`:"";return `<div class="item"><b>${esc(x.service_type)}</b><p>${esc(x.requirement_location)} · ${esc(x.vehicle_type||"")}</p>${q}<p>Status: <b>${esc(x.status)}</b></p>${r?`<p>Quote response: <b>${esc(r)}</b></p>`:""}${x.customer_payment_choice?`<p>Payment choice: <b>${esc(x.customer_payment_choice)}</b></p>`:""}${act}${pay}</div>`}).join("")||"<p>No requests.</p>"}
 async function respondQuote(id,response){let status=response==="accepted"?"customer_accepted":"cancelled";let {error}=await sb.from("bookings").update({quote_response:response,quote_responded_at:new Date().toISOString(),status}).eq("id",id);alert(error?error.message:(response==="accepted"?"Quote accepted. Choose payment method.":"Quote rejected."));if(!error)loadBookings()}
 async function savePaymentChoice(id){let method=$("#pay_"+id).value;if(!method){alert("Select a payment method.");return}let {error}=await sb.from("bookings").update({customer_payment_choice:method,payment_method:method,status:method==="cash"?"customer_accepted":"payment_pending"}).eq("id",id);alert(error?error.message:(method==="cash"?"Cash / pay-after-service selected.":"Payment method saved. Online payment is test mode."));if(!error)loadBookings()}
-async function loadApps(){let {data,error}=await sb.from("job_applications").select("id,status,created_at,jobs(title,location,salary_rate)").eq("driver_id",u.id).order("created_at",{ascending:false});$("#appsList").innerHTML=error?error.message:(data||[]).map(x=>`<div class="item"><b>${esc(x.jobs?.title||"Job")}</b><p>${esc(x.jobs?.location||"")} · ${esc(x.jobs?.salary_rate||"")}</p><b>${esc(x.status)}</b></div>`).join("")||"<p>No applications.</p>"}function esc(x){return String(x||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+async function loadApps(){
+  let {data,error}=await sb
+    .from("job_applications")
+    .select("id,status,created_at,jobs(title,location,salary_rate)")
+    .eq("driver_id",u.id)
+    .order("created_at",{ascending:false});
 
+  $("#appsList").innerHTML=error
+    ? esc(error.message)
+    : (data||[]).map(x=>{
+        let statusMessage="";
+
+        if(x.status==="selected"){
+          statusMessage=`
+            <div style="margin-top:12px;padding:14px;border:1px solid #ddd;border-radius:10px;">
+              <b>🎉 Congratulations! You have been selected for this job.</b>
+              <p>Your application has been successfully selected by the employer.</p>
+            </div>`;
+        }else if(x.status==="rejected"){
+          statusMessage=`<p><b>Application Status:</b> Rejected</p>`;
+        }else{
+          statusMessage=`<p><b>Application Status:</b> ${esc(x.status)}</p>`;
+        }
+
+        return `
+          <div class="item">
+            <b>${esc(x.jobs?.title||"Job")}</b>
+            <p>${esc(x.jobs?.location||"")} · ${esc(x.jobs?.salary_rate||"")}</p>
+            ${statusMessage}
+          </div>`;
+      }).join("") || "<p>No applications.</p>";
+}
+function esc(x){
+  return String(x||"").replace(/[&<>"']/g,m=>({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[m]));
+}
 async function loadAdminBookings(){setTimeout(()=>injectDriverSelectors(),300);
  let {data,error}=await sb.from("bookings").select("*").order("created_at",{ascending:false});
  $("#adminBookingsList").innerHTML=error?`<p>${esc(error.message)}</p>`:(data||[]).map(b=>`<div class="item" data-booking-id="${b.id}">
