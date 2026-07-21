@@ -68,7 +68,7 @@ if(driverIds.length){
     const jobApps=(apps||[]).filter(a=>a.job_id===j.id);
 
     const applications=jobApps.length
-      ? jobApps.map(a=>{ const dp=driverProfiles.find(d=>d.user_id===a.driver_id)||{}; return ``
+      ? jobApps.map(a=>{ const dp=driverProfiles.find(d=>d.user_id===a.driver_id)||{}; return `
         <div class="item" style="margin-top:10px">
           <b>Driver Application</b>
           <p>Status: ${esc(a.status||"applied")}</p>
