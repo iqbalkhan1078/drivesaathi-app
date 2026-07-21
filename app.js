@@ -91,6 +91,31 @@ async function loadAdminJobs(){
     `;
   }).join("")||"<p>No jobs.</p>";
 }
+async function updateJobApplication(applicationId,status){
+  if(!confirm(
+    status==="accepted"
+      ?"Do you want to select this driver?"
+      :"Do you want to reject this application?"
+  )) return;
+
+  const {error}=await sb
+    .from("job_applications")
+    .update({status:status})
+    .eq("id",applicationId);
+
+  if(error){
+    alert("Error: "+error.message);
+    return;
+  }
+
+  alert(
+    status==="accepted"
+      ?"Driver selected successfully."
+      :"Application rejected."
+  );
+
+  await loadAdminJobs();
+}
 function showPayment(service,amount){
  openP("paymentPanel");$("#paySummary").textContent=`${service||"Booking"}${amount?" · Amount ₹"+amount:" · Final amount awaiting confirmation"}`;
 }
