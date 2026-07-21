@@ -34,8 +34,62 @@ async function saveBookingAdmin(id){
  alert(error?error.message:"Booking updated.");
 }
 async function loadAdminJobs(){
- let {data,error}=await sb.from("jobs").select("*").order("created_at",{ascending:false});
- $("#adminJobsList").innerHTML=error?esc(error.message):(data||[]).map(j=>`<div class="item"><b>${esc(j.title)}</b><p>${esc(j.location||"")} · ${esc(j.salary_rate||"")}</p><span>${j.is_active===false?"Closed":"Active"}</span></div>`).join("")||"<p>No jobs.</p>";
+  let {data:jobs,error}=await sb
+    .from("jobs")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    $("#adminJobsList").innerHTML=`<p>${esc(error.message)}</p>`;
+    return;
+  }
+
+  let {data:apps,error:appError}=await sb
+    .from("job_applications")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  if(appError){
+    console.error("Application load error:",appError);
+    apps=[];
+  }
+
+  $("#adminJobsList").innerHTML=(jobs||[]).map(j=>{
+    const jobApps=(apps||[]).filter(a=>a.job_id===j.id);
+
+    const applications=jobApps.length
+      ? jobApps.map(a=>`
+        <div class="item" style="margin-top:10px">
+          <b>Driver Application</b>
+          <p>Status: ${esc(a.status||"applied")}</p>
+          <p>Driver ID: ${esc(a.driver_id||"")}</p>
+
+          <button class="primary"
+            onclick="updateJobApplication('${a.id}','accepted')">
+            Accept / Select Driver
+          </button>
+
+          <button
+            onclick="updateJobApplication('${a.id}','rejected')">
+            Reject
+          </button>
+        </div>
+      `).join("")
+      : `<p>No applications yet.</p>`;
+
+    return `
+      <div class="item">
+        <b>${esc(j.title)}</b>
+        <p>${esc(j.location||"")} · ${esc(j.salary_rate||"")}</p>
+        <span>${j.is_active===false?"Closed":"Active"}</span>
+
+        <div style="margin-top:12px">
+          <b>Applications (${jobApps.length})</b>
+          ${applications}
+        </div>
+      </div>
+    `;
+  }).join("")||"<p>No jobs.</p>";
 }
 function showPayment(service,amount){
  openP("paymentPanel");$("#paySummary").textContent=`${service||"Booking"}${amount?" · Amount ₹"+amount:" · Final amount awaiting confirmation"}`;
