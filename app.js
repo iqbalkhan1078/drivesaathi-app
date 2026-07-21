@@ -63,6 +63,7 @@ async function loadAdminJobs(){
           <b>Driver Application</b>
           <p>Status: ${esc(a.status||"applied")}</p>
           <p>Driver ID: ${esc(a.driver_id||"")}</p>
+<p><b>Applicant profile:</b> Personal · HMV Licence · 5 Years Experience · Full-time · ₹800/day</p>
 
           <button class="primary"
             onclick="updateJobApplication('${a.id}','accepted')">
