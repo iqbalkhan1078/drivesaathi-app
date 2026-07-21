@@ -75,15 +75,19 @@ if(driverIds.length){
           <p>Driver ID: ${esc(a.driver_id||"")}</p>
           <p><b>Profile:</b> ${esc(dp.driver_type||"Not specified")} · Licence: ${esc(dp.licence_classes||"Not specified")} · Experience: ${esc(dp.experience_years??"Not specified")} years · Availability: ${esc(dp.availability||"Not specified")} · Expected Rate: ${esc(dp.expected_rate||"Not specified")}</p>
 
-          <button class="primary"
-            onclick="updateJobApplication('${a.id}','selected')">
-            Accept / Select Driver
-          </button>
+          ${a.status === "applied" || a.status === "shortlisted" ? `
+  <button class="primary"
+    onclick="updateJobApplication('${a.id}','selected')">
+    Accept / Select Driver
+  </button>
 
-          <button
-            onclick="updateJobApplication('${a.id}','rejected')">
-            Reject
-          </button>
+  <button
+    onclick="updateJobApplication('${a.id}','rejected')">
+    Reject
+  </button>
+` : `
+  <p><b>Application Status:</b> ${esc(a.status)}</p>
+`}
         </div>
       `}).join("")
       : `<p>No applications yet.</p>`;
