@@ -41,11 +41,17 @@
   <div class="grid">
     <button class="card" onclick="loadAdminBookings();openP('adminBookingsPanel')"><b>Manage Bookings</b><span>Quote, payment status, driver assignment & service status</span></button>
     <button class="card" onclick="loadAdminJobs();openP('adminJobsPanel')"><b>Jobs & Applications</b><span>Review marketplace activity</span></button>
-  </div>
+ <button class="card" onclick="openP('adminKycPanel');loadAdminKYC()"><b>🪪 Driver KYC Verification</b><span>Review pending documents, approve or reject drivers</span></button> </div>
 </div>
 <div id="adminBookingsPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Booking Control</h2><p class="hint">Recommended flow: Pending → Quote Sent → Customer Accepted → Payment Pending/Paid → Driver Assigned → In Progress → Completed.</p><div id="driverLoadStatus" class="hint">Driver list not loaded yet.</div>
 <div id="adminBookingsList"></div></div>
 <div id="adminJobsPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Jobs & Applications</h2><div id="adminJobsList"></div></div>
+  <div id="adminKycPanel" class="panel sub hidden">
+  <button class="x" onclick="closeP()">×</button>
+  <h2>Driver KYC Verification</h2>
+  <p class="hint">Review driver KYC documents and approve or reject verification.</p>
+  <div id="adminKycList">Loading KYC submissions...</div>
+</div>
 <div id="paymentPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Payment</h2><p id="paySummary"></p><div class="paymethods"><button disabled>UPI</button><button disabled>Card</button><button disabled>Net Banking</button><button disabled>Cash / Pay after service</button></div><p class="hint">Test build: no real money will be charged. Online gateway will be enabled only after merchant onboarding/KYC and secure server-side integration.</p></div>
 <div id="assignmentsPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>My Assignments</h2><div id="assignmentsList"></div></div></section><div id="pricingPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Pricing & Payment Control</h2><p class="hint">Admin-controlled fare, discount, extra charges, FREE service, commission and driver payable.</p><div id="pricingList"></div></div><div id="revenuePanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Dual Commission & Revenue</h2><p class="hint">Control Customer/Employer fee and Driver/Job Seeker fee independently.</p><div id="revenueList"></div></div><div id="workflowPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Business Workflow Control</h2><p class="hint">Trip/Service and Permanent Job/Placement are managed separately.</p><div id="workflowList"></div></div><div id="notificationsPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>🔔 Admin Notifications</h2><div class="notifToolbar"><button class="primary" onclick="markAllNotificationsRead()">Mark All Read</button><button onclick="loadNotifications()">Refresh</button></div><div id="notificationsList"><p>Loading...</p></div></div><div id="publishVacancyPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Publish as Vacancy</h2><p class="hint">Publish a permanent/monthly driver requirement to Driver → Find Jobs.</p><input type="hidden" id="pvBookingId"><label>Job Title</label><input id="pvTitle" placeholder="e.g. Personal Driver Required"><label>Salary / Rate</label><input id="pvSalary" placeholder="e.g. ₹18,000/month"><div class="jobGrid">
 <label>Vehicle Type<input id="pvVehicle" placeholder="Car / Taxi / SUV / Commercial"></label>
