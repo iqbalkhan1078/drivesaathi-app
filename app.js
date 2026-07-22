@@ -251,6 +251,12 @@ async function loadAdminKYC(){
         <b>Licence:</b> ${esc(d.licence_classes || "")}<br>
         <b>Experience:</b> ${esc(d.experience_years || "0")} years<br>
         <b>Status:</b> ${esc(d.verification_status || "pending")}
+        <div style="margin-top:10px;margin-bottom:10px">
+  <button type="button" onclick="viewKycDoc('${d.user_id}','aadhaar')">View Aadhaar</button>
+  <button type="button" onclick="viewKycDoc('${d.user_id}','pan')">View PAN</button>
+  <button type="button" onclick="viewKycDoc('${d.user_id}','licence')">View Licence</button>
+  <button type="button" onclick="viewKycDoc('${d.user_id}','address')">View Address Proof</button>
+</div>
 
         <div style="margin-top:10px">
           <button class="primary"
@@ -297,6 +303,38 @@ async function updateDriverKYC(userId,status){
   );
 
   await loadAdminKYC();
+}
+
+async function viewKycDoc(userId,type){
+  try{
+    const {data:files,error}=await sb.storage
+      .from("driver-kyc-documents")
+      .list(userId);
+
+    if(error) throw error;
+
+    const file=(files||[])
+      .filter(f=>f.name.startsWith(type+"-"))
+      .sort((a,b)=>b.name.localeCompare(a.name))[0];
+
+    if(!file){
+      alert(type+" document not found.");
+      return;
+    }
+
+    const path=userId+"/"+file.name;
+
+    const {data,error:signError}=await sb.storage
+      .from("driver-kyc-documents")
+      .createSignedUrl(path,300);
+
+    if(signError) throw signError;
+
+    window.open(data.signedUrl,"_blank");
+  }catch(err){
+    console.error("KYC document error:",err);
+    alert("Unable to open document: "+err.message);
+  }
 }
 
 async function updateJobApplication(applicationId,status){
