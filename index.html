@@ -6,7 +6,34 @@
 <div id="driver" class="hidden"><h2>Driver Dashboard</h2><button class="card" onclick="openAssignments()"><b>My Assignments</b><span>Assigned trips</span></button><div class="grid"><button class="card" onclick="openP('driverPanel')"><b>My Driver Profile</b><span>Skills, rates and availability</span></button><button class="card" onclick="loadJobs();openP('jobsPanel')"><b>Find Jobs</b><span>Browse driver vacancies</span></button><button class="card" onclick="loadApps();openP('appsPanel')"><b>My Applications</b><span>Track job applications</span></button><button class="card" onclick="openP('kycPanel')"><b>KYC / Verification</b><span>Verification workflow</span></button></div></div>
 <div id="bookingPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Request Driver</h2><form id="bookingForm"><label>Service<select id="service"><option>Temporary / Hourly</option><option>Day-wise</option><option>Trip-wise / Outstation</option><option>Permanent</option><option>Commercial</option><option>Emergency / Instant</option></select></label><label>Location<input id="location" required></label><label>Date & Time<input id="requestedAt" type="datetime-local"></label><label>Vehicle<select id="vehicle"><option>Personal Car</option><option>Taxi</option><option>Truck</option><option>Tempo / Pickup</option><option>Bus</option><option>Trailer / Heavy Vehicle</option><option>Other</option></select></label><label>Details<textarea id="bookingDetails"></textarea></label><p class="hint">Final charge/quote will be confirmed before driver assignment.</p><button class="primary">Submit Request</button></form><p id="bookingMsg"></p></div>
 <div id="jobPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Post Driver Job</h2><form id="jobForm"><label>Job Title<input id="jobTitle" required></label><label>Location<input id="jobLocation" required></label><label>Salary / Rate<input id="salaryRate"></label><label>Details<textarea id="jobDetails"></textarea></label><button class="primary">Post Job</button></form><p id="jobMsg"></p></div>
-<div id="driverPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Driver Profile</h2><form id="driverForm"><label>Driver Type<select id="driverType"><option>Personal</option><option>Commercial</option><option>Both</option></select></label><label>Licence / Vehicle Skills<input id="licence"></label><label>Experience Years<input id="exp" type="number" min="0"></label><label>Availability<select id="avail"><option>Available Now</option><option>Full-time</option><option>Part-time</option><option>Trip-wise</option></select></label><label>Expected Rate<input id="rate"></label><button class="primary">Save Profile</button></form><p id="driverMsg"></p></div>
+<div id="driverPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Driver Profile</h2><form id="driverForm"><label>Driver Type<select id="driverType"><option>Personal</option><option>Commercial</option><option>Both</option></select></label><label>Licence / Vehicle Skills<input id="licence"></label><label>Experience Years<input id="exp" type="number" min="0"></label><label>Availability<select id="avail"><option>Available Now</option><option>Full-time</option><option>Part-time</option><option>Trip-wise</option></select></label><label>Expected Rate<input id="rate"></label><button class="primary">Save Profile</button></form><hr>
+
+<div id="kycSection">
+  <h3>KYC Verification</h3>
+  <p>Status: <b id="kycStatus">Pending</b></p>
+
+  <label>Aadhaar Card *
+    <input type="file" id="kycAadhaar" accept="image/*,.pdf">
+  </label>
+
+  <label>PAN Card *
+    <input type="file" id="kycPan" accept="image/*,.pdf">
+  </label>
+
+  <label>Driving Licence *
+    <input type="file" id="kycLicence" accept="image/*,.pdf">
+  </label>
+
+  <label>Address Proof *
+    <input type="file" id="kycAddress" accept="image/*,.pdf">
+  </label>
+
+  <button type="button" class="primary" onclick="submitDriverKYC()">
+    Submit KYC Documents
+  </button>
+
+  <p id="kycMsg"></p>
+</div><p id="driverMsg"></p></div>
 <div id="jobsPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>Available Jobs</h2><div id="jobsList"></div></div><div id="appsPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>My Applications</h2><div id="appsList"></div></div><div id="bookingsPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>My Requests</h2><div id="bookingsList"></div></div>
 <div id="kycPanel" class="panel sub hidden"><button class="x" onclick="closeP()">×</button><h2>KYC / Verification</h2><p class="hint"><b>Status:</b> <span id="verify">Pending / Not submitted</span></p><p>Driving Licence and approved KYC documents will be stored privately in the production workflow. Sensitive documents will not be public.</p><p>“Police Verified” will only be shown after genuine authorized verification.</p><button disabled>Secure Upload — Next Build</button></div>
 <div id="adminTools" class="hidden">
