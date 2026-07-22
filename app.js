@@ -6,6 +6,47 @@ $("#bookingForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.fro
 $("#jobForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("jobs").insert({employer_id:u.id,title:$("#jobTitle").value,location:$("#jobLocation").value,salary_rate:$("#salaryRate").value,details:$("#jobDetails").value});$("#jobMsg").textContent=error?error.message:"Job posted successfully.";if(!error)e.target.reset()};
 $("#driverForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("driver_profiles").upsert({user_id:u.id,driver_type:$("#driverType").value.toLowerCase(),licence_classes:$("#licence").value,experience_years:Number($("#exp").value||0),availability:$("#avail").value,expected_rate:$("#rate").value});$("#driverMsg").textContent=error?error.message:"Driver profile saved successfully.";if(!error)loadDriver()};
 async function loadDriver(){let {data}=await sb.from("driver_profiles").select("*").eq("user_id",u.id).maybeSingle();if(!data)return;$("#licence").value=data.licence_classes||"";$("#exp").value=data.experience_years||0;$("#avail").value=data.availability||"Available Now";$("#rate").value=data.expected_rate||"";$("#verify").textContent=data.verification_status||"pending"}
+async function submitDriverKYC(){
+  try{
+    const {data:{user},error:userError}=await sb.auth.getUser();
+    if(userError || !user){
+      alert("Please login first");
+      return;
+    }
+
+    const files={
+      aadhaar:document.getElementById("kycAadhaar")?.files[0],
+      pan:document.getElementById("kycPan")?.files[0],
+      licence:document.getElementById("kycLicence")?.files[0],
+      address:document.getElementById("kycAddress")?.files[0]
+    };
+
+    if(!files.aadhaar || !files.pan || !files.licence || !files.address){
+      document.getElementById("kycMsg").textContent="Please select all 4 KYC documents.";
+      return;
+    }
+
+    document.getElementById("kycMsg").textContent="Uploading documents...";
+
+    for(const [type,file] of Object.entries(files)){
+      const ext=file.name.split(".").pop();
+      const path=`${user.id}/${type}-${Date.now()}.${ext}`;
+
+      const {error}=await sb.storage
+        .from("driver-kyc-documents")
+        .upload(path,file,{upsert:true});
+
+      if(error) throw error;
+    }
+
+    document.getElementById("kycStatus").textContent="Submitted / Pending Verification";
+    document.getElementById("kycMsg").textContent="KYC documents submitted successfully.";
+
+  }catch(err){
+    console.error(err);
+    document.getElementById("kycMsg").textContent="Upload failed: "+err.message;
+  }
+}
 async function loadJobs(){
   let {data,error}=await sb
     .from("jobs")
