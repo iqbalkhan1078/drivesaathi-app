@@ -257,6 +257,7 @@ async function loadAdminKYC(){
   <button type="button" onclick="viewKycDoc('${d.user_id}','pan')">View PAN</button>
   <button type="button" onclick="viewKycDoc('${d.user_id}','licence')">View Licence</button>
   <button type="button" onclick="viewKycDoc('${d.user_id}','address')">View Address Proof</button>
+  <button type="button" onclick="viewKycDoc('${d.user_id}','experience')">View Experience Proof</button>
 </div>
 
         <div style="margin-top:10px">
