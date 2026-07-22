@@ -226,6 +226,79 @@ if(driverIds.length){
     `;
   }).join("")||"<p>No jobs.</p>";
 }
+async function loadAdminKYC(){
+  const box = document.getElementById("adminKycList");
+  if(!box) return;
+
+  box.innerHTML = "<p>Loading KYC submissions...</p>";
+
+  try{
+    const {data:profiles,error} = await sb
+      .from("driver_profiles")
+      .select("*")
+      .order("created_at",{ascending:false});
+
+    if(error) throw error;
+
+    if(!profiles || !profiles.length){
+      box.innerHTML = "<p>No driver KYC submissions found.</p>";
+      return;
+    }
+
+    box.innerHTML = profiles.map(d => `
+      <div class="item" style="margin-bottom:16px">
+        <b>Driver ID:</b> ${esc(d.user_id || "")}<br>
+        <b>Licence:</b> ${esc(d.licence_classes || "")}<br>
+        <b>Experience:</b> ${esc(d.experience_years || "0")} years<br>
+        <b>Status:</b> ${esc(d.verification_status || "pending")}
+
+        <div style="margin-top:10px">
+          <button class="primary"
+            onclick="updateDriverKYC('${d.user_id}','approved')">
+            Approve
+          </button>
+
+          <button
+            onclick="updateDriverKYC('${d.user_id}','rejected')">
+            Reject
+          </button>
+        </div>
+      </div>
+    `).join("");
+
+  }catch(err){
+    console.error("KYC load error:",err);
+    box.innerHTML =
+      "<p>Unable to load KYC: "+esc(err.message || "Unknown error")+"</p>";
+  }
+}
+
+async function updateDriverKYC(userId,status){
+  const msg = status === "approved"
+    ? "Approve this driver's KYC?"
+    : "Reject this driver's KYC?";
+
+  if(!confirm(msg)) return;
+
+  const {error} = await sb
+    .from("driver_profiles")
+    .update({verification_status:status})
+    .eq("user_id",userId);
+
+  if(error){
+    alert("KYC update failed: "+error.message);
+    return;
+  }
+
+  alert(
+    status === "approved"
+      ? "Driver KYC approved successfully."
+      : "Driver KYC rejected."
+  );
+
+  await loadAdminKYC();
+}
+
 async function updateJobApplication(applicationId,status){
   if(!confirm(
     status==="accepted"
