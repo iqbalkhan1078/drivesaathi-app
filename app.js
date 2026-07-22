@@ -18,7 +18,8 @@ async function submitDriverKYC(){
       aadhaar:document.getElementById("kycAadhaar")?.files[0],
       pan:document.getElementById("kycPan")?.files[0],
       licence:document.getElementById("kycLicence")?.files[0],
-      address:document.getElementById("kycAddress")?.files[0]
+      address:document.getElementById("kycAddress")?.files[0],
+      experience:document.getElementById("kycExperience")?.files[0]
     };
 
     if(!files.aadhaar || !files.pan || !files.licence || !files.address){
