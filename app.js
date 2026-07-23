@@ -4,7 +4,62 @@ async function init(){let {data:{user}}=await sb.auth.getUser();u=user;if(!u){$(
 async function logout(){await sb.auth.signOut();u=null;init()}function closeP(){document.querySelectorAll(".sub").forEach(x=>x.classList.add("hidden"))}function openP(id){closeP();$("#"+id).classList.remove("hidden");window.scrollTo(0,0)}function book(t){openP("bookingPanel");$("#service").value=t}
 $("#bookingForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("bookings").insert({customer_id:u.id,service_type:$("#service").value,requirement_location:$("#location").value,requested_at:$("#requestedAt").value||null,vehicle_type:$("#vehicle").value,details:$("#bookingDetails").value});$("#bookingMsg").textContent=error?error.message:"Driver request submitted successfully.";if(!error)e.target.reset()};
 $("#jobForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("jobs").insert({employer_id:u.id,title:$("#jobTitle").value,location:$("#jobLocation").value,salary_rate:$("#salaryRate").value,details:$("#jobDetails").value});$("#jobMsg").textContent=error?error.message:"Job posted successfully.";if(!error)e.target.reset()};
-$("#driverForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("driver_profiles").upsert({user_id:u.id,driver_type:$("#driverType").value.toLowerCase(),licence_classes:$("#licence").value,experience_years:Number($("#exp").value||0),availability:$("#avail").value,expected_rate:$("#rate").value});$("#driverMsg").textContent=error?error.message:"Driver profile saved successfully.";if(!error)loadDriver()};
+
+async function saveDriverProfile(e){
+  e.preventDefault();
+
+  const jobPreferences = [...document.querySelectorAll('input[name="jobPreference"]:checked')]
+    .map(x => x.value);
+
+  const selfieFile = document.getElementById("driverSelfie")?.files[0];
+  let selfieUrl = null;
+
+  if(selfieFile){
+    const ext = selfieFile.name.split(".").pop();
+    const selfiePath = `${u.id}/selfie-${Date.now()}.${ext}`;
+
+    const {error: uploadError} = await sb.storage
+      .from("driver-kyc-documents")
+      .upload(selfiePath, selfieFile, {upsert:true});
+
+    if(uploadError){
+      alert("Selfie upload failed: " + uploadError.message);
+      return;
+    }
+
+    selfieUrl = selfiePath;
+  }
+
+  const profileData = {
+    user_id: u.id,
+    first_name: document.getElementById("firstName")?.value || "",
+    middle_name: document.getElementById("middleName")?.value || "",
+    last_name: document.getElementById("lastName")?.value || "",
+    current_address: document.getElementById("currentAddress")?.value || "",
+    permanent_address: document.getElementById("permanentAddress")?.value || "",
+    driver_type: document.getElementById("driverType")?.value?.toLowerCase() || "",
+    licence_classes: document.getElementById("licence")?.value || "",
+    experience_years: Number(document.getElementById("exp")?.value || 0),
+    availability: document.getElementById("avail")?.value || "",
+    expected_rate: document.getElementById("rate")?.value || "",
+    job_preferences: jobPreferences,
+    profile_verification_status: "pending"
+  };
+
+  if(selfieUrl) profileData.selfie_url = selfieUrl;
+
+  const {error} = await sb
+    .from("driver_profiles")
+    .upsert(profileData);
+
+  if(error){
+    alert("Profile save failed: " + error.message);
+    return;
+  }
+
+  alert("Driver profile submitted for Admin Verification");
+  await loadDriver();
+}
 async function loadDriver(){let {data}=await sb.from("driver_profiles").select("*").eq("user_id",u.id).maybeSingle();if(!data)return;$("#licence").value=data.licence_classes||"";$("#exp").value=data.experience_years||0;$("#avail").value=data.availability||"Available Now";$("#rate").value=data.expected_rate||"";$("#verify").textContent=data.verification_status||"pending"}
 async function submitDriverKYC(){
   try{
