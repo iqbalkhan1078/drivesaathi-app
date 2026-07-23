@@ -2,33 +2,7 @@ let mode="signup",sb=supabase.createClient(DRIVESAATHI_CONFIG.SUPABASE_URL,DRIVE
 $("#authForm").onsubmit=async e=>{e.preventDefault();let r=mode==="signup"?await sb.auth.signUp({email:$("#email").value,password:$("#password").value,options:{data:{full_name:$("#fullName").value,role:$("#role").value},emailRedirectTo:location.origin}}):await sb.auth.signInWithPassword({email:$("#email").value,password:$("#password").value});$("#authMsg").textContent=r.error?r.error.message:(mode==="signup"?"Account created. Check email if confirmation is enabled.":"Logged in.");if(!r.error)init()};
 async function init(){let {data:{user}}=await sb.auth.getUser();u=user;if(!u){$("#auth").classList.remove("hidden");$("#app").classList.add("hidden");return}$("#auth").classList.add("hidden");$("#app").classList.remove("hidden");let {data}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();p=data;let role=p?.role||u.user_metadata?.role||"customer";$("#who").textContent=u.email;$("#roleBadge").textContent=role==="driver"?"DRIVER ACCOUNT":"CUSTOMER / EMPLOYER";$("#dashTitle").textContent=role==="driver"?"Driver Dashboard":"Customer Dashboard";$("#driver").classList.toggle("hidden",role!=="driver");$("#customer").classList.toggle("hidden",role==="driver"||role==="admin");$("#adminTools").classList.toggle("hidden",role!=="admin");if(role==="driver")loadDriver();if(role==="admin"){$("#dashTitle").textContent="Admin Dashboard";$("#roleBadge").textContent="ADMIN ACCOUNT"}}init();
 async function logout(){await sb.auth.signOut();u=null;init()}function closeP(){document.querySelectorAll(".sub").forEach(x=>x.classList.add("hidden"))}function openP(id){closeP();$("#"+id).classList.remove("hidden");window.scrollTo(0,0)}function book(t){openP("bookingPanel");$("#service").value=t}
-$("#bookingForm").onsubmit=async e=>{e.preventDefault();
-  const extra=[
-    `Requirement Type: ${$("#requirementType")?.value||$("#service").value}`,
-    `Driver Type Needed: ${$("#requiredDriverType")?.value||"Any"}`,
-    `Experience Required: ${$("#requiredExperience")?.value||"0"} years`,
-    `Budget / Rate: ${$("#requirementBudget")?.value||"Not specified"}`,
-    `Outstation: ${$("#reqOutstation")?.checked?"Yes":"No"}`,
-    `Night Driving: ${$("#reqNight")?.checked?"Yes":"No"}`,
-    `Immediate Joining: ${$("#reqImmediate")?.checked?"Yes":"No"}`,
-    `Details: ${$("#bookingDetails").value||""}`
-  ].join("\n");
-  let {error}=await sb.from("bookings").insert({customer_id:u.id,service_type:$("#requirementType")?.value||$("#service").value,requirement_location:$("#location").value,requested_at:$("#requestedAt").value||null,vehicle_type:$("#vehicle").value,details:extra});
-  $("#bookingMsg").textContent=error?error.message:"Driver requirement submitted successfully.";if(!error)e.target.reset()};
-
-async function previewDriverMatches(){
-  const box=$("#matchPreview"); if(!box)return;
-  const pref=($("#requirementType")?.value||"").toLowerCase().replaceAll(" ","_");
-  const dtype=($("#requiredDriverType")?.value||"").toLowerCase();
-  const minExp=Number($("#requiredExperience")?.value||0);
-  const {data,error}=await sb.from("driver_profiles").select("user_id,first_name,middle_name,last_name,driver_type,experience_years,availability,job_preferences,verification_status,profile_verification_status");
-  if(error){box.textContent="Matching preview unavailable.";return}
-  const aliases={part_time:["part_time"],hourly:["hourly"],trip_wise:["trip_wise"],one_day:["one_day"],monthly_contract:["monthly_contract","permanent"],permanent:["permanent"]};
-  const wanted=aliases[pref]||[pref];
-  const matches=(data||[]).filter(d=>d.verification_status==="approved"&&d.profile_verification_status==="approved").filter(d=>!dtype||dtype.includes("any")||dtype.includes("both")||String(d.driver_type||"").toLowerCase()==="both"||String(d.driver_type||"").toLowerCase()===dtype).filter(d=>Number(d.experience_years||0)>=minExp).filter(d=>!wanted[0]||wanted.some(x=>(d.job_preferences||[]).includes(x)));
-  box.innerHTML=matches.length?`<b>${matches.length} verified matching driver(s) available.</b><br><small>Final assignment remains under Admin control.</small>`:"No exact verified match found yet. Request can still be submitted for Admin matching.";
-}
-["requirementType","requiredDriverType","requiredExperience"].forEach(id=>document.addEventListener("change",e=>{if(e.target?.id===id)previewDriverMatches()}));
+$("#bookingForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("bookings").insert({customer_id:u.id,service_type:$("#service").value,requirement_location:$("#location").value,requested_at:$("#requestedAt").value||null,vehicle_type:$("#vehicle").value,details:$("#bookingDetails").value});$("#bookingMsg").textContent=error?error.message:"Driver request submitted successfully.";if(!error)e.target.reset()};
 $("#jobForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("jobs").insert({employer_id:u.id,title:$("#jobTitle").value,location:$("#jobLocation").value,salary_rate:$("#salaryRate").value,details:$("#jobDetails").value});$("#jobMsg").textContent=error?error.message:"Job posted successfully.";if(!error)e.target.reset()};
 
 async function saveDriverProfile(e){
@@ -804,3 +778,21 @@ async function enhanceDriverJobDetails(){
  });
 }
 setInterval(enhanceDriverJobDetails,1500);
+
+// ===== Batch 3: DriveSaathi Help Center =====
+const HELP_KB={
+ kyc:"KYC ke liye Aadhaar, PAN, Driving Licence aur Address Proof submit karein. Existing uploaded documents dobara select karna zaroori nahi. Status Admin verification ke baad update hota hai.",
+ booking:"Customer Dashboard se required service select karke location, date/time, vehicle aur details submit karein. Request My Requests me track hogi.",
+ jobs:"Driver Find Jobs me vacancies dekhkar apply kar sakta hai. Application ka status My Applications me dikhega.",
+ payment:"Quote/price Admin workflow ke through confirm hota hai. Test build me real online payment charge nahi hota.",
+ profile:"Driver Profile me name, addresses, selfie, job preferences, driver type, licence, experience, availability aur expected rate save karein.",
+ assignment:"Admin driver assign karta hai. Driver My Assignments me Accept/Reject kar sakta hai; accepted trip me Start aur Completion workflow available hai."
+};
+function openHelp(){openP("helpPanel");loadMyHelpQueries()}
+function askHelp(k){if($("#helpQuestion"))$("#helpQuestion").value=k;$("#helpAnswer").textContent=HELP_KB[k]||"Please submit your query to Admin Support."}
+function searchHelpAnswer(){const q=($("#helpQuestion")?.value||"").toLowerCase();let key=Object.keys(HELP_KB).find(k=>q.includes(k));if(!key){if(/aadhaar|pan|licen|document|verify/.test(q))key="kyc";else if(/request|hire|driver booking/.test(q))key="booking";else if(/job|application|vacan/.test(q))key="jobs";else if(/pay|price|fare|commission|money/.test(q))key="payment";else if(/profile|selfie|address/.test(q))key="profile";else if(/trip|assign|otp|accept|reject/.test(q))key="assignment"}$("#helpAnswer").textContent=key?HELP_KB[key]:"Is sawal ka exact automatic answer available nahi hai. Neeche query submit karein; Admin Support reply karega."}
+async function submitHelpQuery(){const msg=$("#helpMsg"),text=($("#helpQuery")?.value||"").trim();if(!text){msg.textContent="Please write your query.";return}let role=p?.role||u?.user_metadata?.role||"customer";let r=await sb.from("support_queries").insert({user_id:u.id,user_role:role,category:$("#helpCategory").value,query:text,status:"open"});msg.textContent=r.error?("Unable to submit: "+r.error.message):"Query submitted to DriveSaathi Admin Support.";if(!r.error){$("#helpQuery").value="";loadMyHelpQueries()}}
+async function loadMyHelpQueries(){const box=$("#myHelpQueries");if(!box||!u)return;box.innerHTML="<p>Loading...</p>";let r=await sb.from("support_queries").select("*").eq("user_id",u.id).order("created_at",{ascending:false});box.innerHTML=r.error?`<p>${esc(r.error.message)}</p>`:(r.data||[]).map(x=>`<div class="item helpLog"><b>${esc(x.category||"General")}</b><p>${esc(x.query)}</p><p>Status: <b>${esc(x.status||"open")}</b></p>${x.admin_reply?`<div class="helpAnswer"><b>DriveSaathi Support:</b><br>${esc(x.admin_reply)}</div>`:"<p>Awaiting Admin reply.</p>"}</div>`).join("")||"<p>No support queries yet.</p>"}
+async function loadAdminHelpQueries(){const box=$("#adminHelpQueries");if(!box)return;box.innerHTML="<p>Loading...</p>";let r=await sb.from("support_queries").select("*").order("created_at",{ascending:false});box.innerHTML=r.error?`<p>${esc(r.error.message)}</p>`:(r.data||[]).map(x=>`<div class="item helpLog"><b>${esc(x.user_role||"user")} · ${esc(x.category||"General")}</b><p>${esc(x.query)}</p><p>User: ${esc(x.user_id)}</p><p>Status: <b>${esc(x.status||"open")}</b></p><label>Admin Reply<textarea id="hr_${x.id}">${esc(x.admin_reply||"")}</textarea></label><label>Status<select id="hs_${x.id}"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="answered">Answered</option><option value="closed">Closed</option></select></label><button class="primary" onclick="replyHelpQuery('${x.id}')">Save Reply</button></div>`).join("")||"<p>No support queries.</p>";(r.data||[]).forEach(x=>{let e=$("#hs_"+x.id);if(e)e.value=x.status||"open"})}
+async function replyHelpQuery(id){let r=await sb.from("support_queries").update({admin_reply:$("#hr_"+id).value,status:$("#hs_"+id).value,answered_at:new Date().toISOString()}).eq("id",id);alert(r.error?r.error.message:"Support reply saved.");if(!r.error)loadAdminHelpQueries()}
+setTimeout(()=>{const f=$("#supportFab");if(f&&u)f.classList.remove("hidden")},1200);
