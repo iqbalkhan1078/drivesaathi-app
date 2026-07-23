@@ -2,7 +2,33 @@ let mode="signup",sb=supabase.createClient(DRIVESAATHI_CONFIG.SUPABASE_URL,DRIVE
 $("#authForm").onsubmit=async e=>{e.preventDefault();let r=mode==="signup"?await sb.auth.signUp({email:$("#email").value,password:$("#password").value,options:{data:{full_name:$("#fullName").value,role:$("#role").value},emailRedirectTo:location.origin}}):await sb.auth.signInWithPassword({email:$("#email").value,password:$("#password").value});$("#authMsg").textContent=r.error?r.error.message:(mode==="signup"?"Account created. Check email if confirmation is enabled.":"Logged in.");if(!r.error)init()};
 async function init(){let {data:{user}}=await sb.auth.getUser();u=user;if(!u){$("#auth").classList.remove("hidden");$("#app").classList.add("hidden");return}$("#auth").classList.add("hidden");$("#app").classList.remove("hidden");let {data}=await sb.from("profiles").select("*").eq("id",u.id).maybeSingle();p=data;let role=p?.role||u.user_metadata?.role||"customer";$("#who").textContent=u.email;$("#roleBadge").textContent=role==="driver"?"DRIVER ACCOUNT":"CUSTOMER / EMPLOYER";$("#dashTitle").textContent=role==="driver"?"Driver Dashboard":"Customer Dashboard";$("#driver").classList.toggle("hidden",role!=="driver");$("#customer").classList.toggle("hidden",role==="driver"||role==="admin");$("#adminTools").classList.toggle("hidden",role!=="admin");if(role==="driver")loadDriver();if(role==="admin"){$("#dashTitle").textContent="Admin Dashboard";$("#roleBadge").textContent="ADMIN ACCOUNT"}}init();
 async function logout(){await sb.auth.signOut();u=null;init()}function closeP(){document.querySelectorAll(".sub").forEach(x=>x.classList.add("hidden"))}function openP(id){closeP();$("#"+id).classList.remove("hidden");window.scrollTo(0,0)}function book(t){openP("bookingPanel");$("#service").value=t}
-$("#bookingForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("bookings").insert({customer_id:u.id,service_type:$("#service").value,requirement_location:$("#location").value,requested_at:$("#requestedAt").value||null,vehicle_type:$("#vehicle").value,details:$("#bookingDetails").value});$("#bookingMsg").textContent=error?error.message:"Driver request submitted successfully.";if(!error)e.target.reset()};
+$("#bookingForm").onsubmit=async e=>{e.preventDefault();
+  const extra=[
+    `Requirement Type: ${$("#requirementType")?.value||$("#service").value}`,
+    `Driver Type Needed: ${$("#requiredDriverType")?.value||"Any"}`,
+    `Experience Required: ${$("#requiredExperience")?.value||"0"} years`,
+    `Budget / Rate: ${$("#requirementBudget")?.value||"Not specified"}`,
+    `Outstation: ${$("#reqOutstation")?.checked?"Yes":"No"}`,
+    `Night Driving: ${$("#reqNight")?.checked?"Yes":"No"}`,
+    `Immediate Joining: ${$("#reqImmediate")?.checked?"Yes":"No"}`,
+    `Details: ${$("#bookingDetails").value||""}`
+  ].join("\n");
+  let {error}=await sb.from("bookings").insert({customer_id:u.id,service_type:$("#requirementType")?.value||$("#service").value,requirement_location:$("#location").value,requested_at:$("#requestedAt").value||null,vehicle_type:$("#vehicle").value,details:extra});
+  $("#bookingMsg").textContent=error?error.message:"Driver requirement submitted successfully.";if(!error)e.target.reset()};
+
+async function previewDriverMatches(){
+  const box=$("#matchPreview"); if(!box)return;
+  const pref=($("#requirementType")?.value||"").toLowerCase().replaceAll(" ","_");
+  const dtype=($("#requiredDriverType")?.value||"").toLowerCase();
+  const minExp=Number($("#requiredExperience")?.value||0);
+  const {data,error}=await sb.from("driver_profiles").select("user_id,first_name,middle_name,last_name,driver_type,experience_years,availability,job_preferences,verification_status,profile_verification_status");
+  if(error){box.textContent="Matching preview unavailable.";return}
+  const aliases={part_time:["part_time"],hourly:["hourly"],trip_wise:["trip_wise"],one_day:["one_day"],monthly_contract:["monthly_contract","permanent"],permanent:["permanent"]};
+  const wanted=aliases[pref]||[pref];
+  const matches=(data||[]).filter(d=>d.verification_status==="approved"&&d.profile_verification_status==="approved").filter(d=>!dtype||dtype.includes("any")||dtype.includes("both")||String(d.driver_type||"").toLowerCase()==="both"||String(d.driver_type||"").toLowerCase()===dtype).filter(d=>Number(d.experience_years||0)>=minExp).filter(d=>!wanted[0]||wanted.some(x=>(d.job_preferences||[]).includes(x)));
+  box.innerHTML=matches.length?`<b>${matches.length} verified matching driver(s) available.</b><br><small>Final assignment remains under Admin control.</small>`:"No exact verified match found yet. Request can still be submitted for Admin matching.";
+}
+["requirementType","requiredDriverType","requiredExperience"].forEach(id=>document.addEventListener("change",e=>{if(e.target?.id===id)previewDriverMatches()}));
 $("#jobForm").onsubmit=async e=>{e.preventDefault();let {error}=await sb.from("jobs").insert({employer_id:u.id,title:$("#jobTitle").value,location:$("#jobLocation").value,salary_rate:$("#salaryRate").value,details:$("#jobDetails").value});$("#jobMsg").textContent=error?error.message:"Job posted successfully.";if(!error)e.target.reset()};
 
 async function saveDriverProfile(e){

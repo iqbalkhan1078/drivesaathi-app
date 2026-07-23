@@ -79,3 +79,10 @@ body.panel-open{
 .panel.sub:not(.hidden)::before{content:"DriveSaathi · Safar Aapka, Saath Humara";display:block;font-weight:800;font-size:13px;letter-spacing:.2px;margin:0 56px 18px 0;padding:10px 12px;border-radius:10px;background:#fff5dc}
 .profileReviewHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.profileReviewHead p{margin:5px 0}.profileReview .actions{margin-top:14px}
 @media(max-width:600px){.profileReviewHead{flex-direction:column}.profileReviewHead button{width:100%}}
+
+/* ===== FAST UPGRADE BATCH 2: Handshake Brand + Requirement Matching ===== */
+.brandMark{font-size:25px;background:linear-gradient(145deg,#f3bd54,#d99a25);border:2px solid rgba(255,255,255,.18);width:48px;height:48px;border-radius:50%;letter-spacing:0;box-shadow:0 7px 20px rgba(0,0,0,.2)}
+header{background:linear-gradient(135deg,#081a33,#0b2b52)}
+.top{border-top:4px solid #d99a25}.top h1{margin-bottom:4px}.card{transition:transform .15s ease,box-shadow .15s ease;border:1px solid #edf0f5}.card:active{transform:scale(.985)}
+.matchPreview{margin:12px 0;padding:13px;border-radius:12px;background:#eef5ff;border:1px solid #cdddf2;color:#17385f;line-height:1.45}.requirementChecks{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px}.requirementChecks label{background:#f7f8fa;padding:10px;border-radius:10px;margin:0}
+@media(max-width:600px){header .brand{width:100%}.brandMark{width:46px;height:46px}.panel{padding:17px}.panel.sub:not(.hidden){padding:16px}.grid{gap:10px}.card{min-height:108px}.requirementChecks{grid-template-columns:1fr}}
