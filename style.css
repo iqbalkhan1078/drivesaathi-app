@@ -88,3 +88,6 @@ body.panel-open{
 
 /* Batch 4 auth/admin upgrades */
 .auth small{font-weight:400;color:#667085}.linkBtn{border:0;background:transparent;text-decoration:underline;padding:10px 0;cursor:pointer}.auth textarea{min-height:70px}#supportPendingBadge{margin-left:6px}
+
+/* ===== Batch 5 ===== */
+.planEditor{background:#fff8e8;border:1px solid #f0c36b;border-radius:14px;padding:16px;margin-bottom:16px}.jobCard{border-left:4px solid #d99a25}.planEditor textarea{min-height:100px}
