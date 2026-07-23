@@ -32,7 +32,7 @@
 .jobGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.jobGrid label,.checks label{display:block}.jobGrid input,.jobGrid select{width:100%;box-sizing:border-box}.checks{padding:10px 0}.checks label{margin:8px 0}.checks input{width:auto}.driverJobDetails{margin-top:12px;padding:12px;background:#f6f8fb;border-radius:10px}.driverJobDetails p{margin:6px 0}.privacyNote{font-size:12px;opacity:.75}@media(max-width:600px){.jobGrid{grid-template-columns:1fr}}
 /* ===== FULL SCREEN APP PANEL SYSTEM ===== */
 
-.panel:not(.hidden){
+.panel.sub:not(.hidden){
   position:fixed;
   top:0;
   left:0;
@@ -50,7 +50,7 @@
   -webkit-overflow-scrolling:touch;
 }
 
-.panel:not(.hidden) > .x{
+.panel.sub:not(.hidden) > .x{
   position:sticky;
   top:0;
   float:right;
