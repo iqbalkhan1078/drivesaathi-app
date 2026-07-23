@@ -68,7 +68,14 @@ body.panel-open{
 }
 
 @media (min-width:768px){
-  .panel:not(.hidden){
+  .panel.sub:not(.hidden){
     padding:30px max(30px, calc((100% - 1000px)/2));
   }
 }
+
+
+/* ===== DriveSaathi Brand + Verification Upgrade ===== */
+.brand{display:flex;align-items:center;gap:10px}.brand>span:last-child{display:flex;flex-direction:column}.brandMark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#d99a25;color:#111;font-weight:900;letter-spacing:-1px;box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.panel.sub:not(.hidden)::before{content:"DriveSaathi · Safar Aapka, Saath Humara";display:block;font-weight:800;font-size:13px;letter-spacing:.2px;margin:0 56px 18px 0;padding:10px 12px;border-radius:10px;background:#fff5dc}
+.profileReviewHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.profileReviewHead p{margin:5px 0}.profileReview .actions{margin-top:14px}
+@media(max-width:600px){.profileReviewHead{flex-direction:column}.profileReviewHead button{width:100%}}

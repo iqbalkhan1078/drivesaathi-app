@@ -60,15 +60,23 @@ async function saveDriverProfile(e){
   alert("Driver profile submitted for Admin Verification");
   await loadDriver();
 }
-async function loadDriver(){let {data}=await sb.from("driver_profiles").select("*").eq("user_id",u.id).maybeSingle();if(!data)return;$("#licence").value=data.licence_classes||"";$("#exp").value=data.experience_years||0;$("#avail").value=data.availability||"Available Now";$("#rate").value=data.expected_rate||"";$("#verify").textContent=data.verification_status||"pending"}
+async function loadDriver(){
+  let {data}=await sb.from("driver_profiles").select("*").eq("user_id",u.id).maybeSingle();
+  if(!data)return;
+  const set=(id,v)=>{const el=$(id);if(el)el.value=v??""};
+  set("#firstName",data.first_name);set("#middleName",data.middle_name);set("#lastName",data.last_name);
+  set("#currentAddress",data.current_address);set("#permanentAddress",data.permanent_address);
+  set("#driverType",data.driver_type?data.driver_type.charAt(0).toUpperCase()+data.driver_type.slice(1):"Personal");
+  set("#licence",data.licence_classes);set("#exp",data.experience_years||0);set("#avail",data.availability||"Available Now");set("#rate",data.expected_rate);
+  document.querySelectorAll('input[name="jobPreference"]').forEach(x=>x.checked=(data.job_preferences||[]).includes(x.value));
+  if($("#verify")) $("#verify").textContent=data.verification_status||"pending";
+  if($("#kycStatus")) $("#kycStatus").textContent=data.verification_status||"pending";
+}
 async function submitDriverKYC(){
+  const msg=document.getElementById("kycMsg");
   try{
     const {data:{user},error:userError}=await sb.auth.getUser();
-    if(userError || !user){
-      alert("Please login first");
-      return;
-    }
-
+    if(userError||!user){alert("Please login first");return}
     const files={
       aadhaar:document.getElementById("kycAadhaar")?.files[0],
       pan:document.getElementById("kycPan")?.files[0],
@@ -76,75 +84,30 @@ async function submitDriverKYC(){
       address:document.getElementById("kycAddress")?.files[0],
       experience:document.getElementById("kycExperience")?.files[0]
     };
-
-    if(!files.aadhaar || !files.pan || !files.licence || !files.address){
-      document.getElementById("kycMsg").textContent="Please select all 4 KYC documents.";
-      return;
+    const {data:existing,error:listError}=await sb.storage.from("driver-kyc-documents").list(user.id);
+    if(listError) throw listError;
+    const required=["aadhaar","pan","licence","address"];
+    const missing=required.filter(type=>!files[type]&&!(existing||[]).some(f=>f.name.startsWith(type+"-")));
+    if(missing.length){
+      msg.textContent="Please upload missing documents: "+missing.join(", ");return;
     }
-
-    document.getElementById("kycMsg").textContent="Uploading documents...";
-
-    for(const [type,file] of Object.entries(files)){
-      const ext=file.name.split(".").pop();
+    const selected=Object.entries(files).filter(([,file])=>file);
+    if(!selected.length){msg.textContent="No new document selected. Existing KYC documents are already saved.";return}
+    msg.textContent="Uploading selected documents...";
+    for(const [type,file] of selected){
+      const ext=(file.name.split(".").pop()||"bin").toLowerCase();
       const path=`${user.id}/${type}-${Date.now()}.${ext}`;
-
-      const {error}=await sb.storage
-        .from("driver-kyc-documents")
-        .upload(path,file,{upsert:true});
-
+      const {error}=await sb.storage.from("driver-kyc-documents").upload(path,file,{upsert:false});
       if(error) throw error;
     }
-
+    await sb.from("driver_profiles").update({verification_status:"pending"}).eq("user_id",user.id);
     document.getElementById("kycStatus").textContent="Submitted / Pending Verification";
-    document.getElementById("kycMsg").textContent="KYC documents submitted successfully.";
-
-  }catch(err){
-    console.error(err);
-    document.getElementById("kycMsg").textContent="Upload failed: "+err.message;
-  }
+    if(document.getElementById("verify"))document.getElementById("verify").textContent="pending";
+    msg.textContent="KYC documents saved successfully. Existing documents were kept.";
+    ["kycAadhaar","kycPan","kycLicence","kycAddress","kycExperience"].forEach(id=>{const el=document.getElementById(id);if(el)el.value=""});
+  }catch(err){console.error(err);msg.textContent="Upload failed: "+err.message}
 }
-async function loadJobs(){
-  let {data,error}=await sb
-    .from("jobs")
-    .select("*")
-    .eq("is_active",true)
-    .order("created_at",{ascending:false});
 
-  if(error){
-    $("#jobsList").innerHTML=esc(error.message);
-    return;
-  }
-
-  let {data:myApps,error:appError}=await sb
-    .from("job_applications")
-    .select("job_id,status")
-    .eq("driver_id",u.id);
-
-  if(appError) myApps=[];
-
-  $("#jobsList").innerHTML=(data||[]).map(j=>{
-    const application=(myApps||[]).find(a=>a.job_id===j.id);
-
-    let action=`<button class="primary" onclick="applyJob('${j.id}')">Apply</button>`;
-
-    if(application){
-      if(application.status==="selected"){
-        action=`<p><b>🎉 You have been selected for this job!</b></p>`;
-      }else if(application.status==="rejected"){
-        action=`<p><b>Application Status:</b> Rejected</p>`;
-      }else{
-        action=`<p><b>Application Status:</b> ${esc(application.status)}</p>`;
-      }
-    }
-
-    return `<div class="item">
-      <b>${esc(j.title)}</b>
-      <p>${esc(j.location)} · ${esc(j.salary_rate||"Rate not specified")}</p>
-      ${action}
-    </div>`;
-  }).join("")||"<p>No active jobs.</p>";
-}
-async function applyJob(id){let {error}=await sb.from("job_applications").insert({job_id:id,driver_id:u.id});alert(error?(error.code==="23505"?"Already applied.":error.message):"Application submitted.")}
 async function loadBookings(){let {data,error}=await sb.from("bookings").select("*").eq("customer_id",u.id).order("created_at",{ascending:false});if(error){$("#bookingsList").innerHTML=esc(error.message);return}$("#bookingsList").innerHTML=(data||[]).map(x=>{let q=x.quoted_amount!=null?`<p class="quote">DriveSaathi Quote: <b>₹${esc(x.quoted_amount)}</b></p>`:"";let r=x.quote_response||"";let act=(x.status==="quote_sent"&&!r)?`<div class="actions"><button class="primary" onclick="respondQuote('${x.id}','accepted')">Accept Quote</button><button class="danger" onclick="respondQuote('${x.id}','rejected')">Reject Quote</button></div>`:"";let pay=(r==="accepted"||x.status==="customer_accepted"||x.status==="payment_pending")?`<div class="paychoice"><b>Choose Payment Method</b><select id="pay_${x.id}"><option value="">Select</option><option value="upi">UPI</option><option value="card">Card</option><option value="net_banking">Net Banking</option><option value="cash">Cash / Pay after service</option></select><button onclick="savePaymentChoice('${x.id}')">Confirm Method</button><small>Test mode — no money charged.</small></div>`:"";return `<div class="item"><b>${esc(x.service_type)}</b><p>${esc(x.requirement_location)} · ${esc(x.vehicle_type||"")}</p>${q}<p>Status: <b>${esc(x.status)}</b></p>${r?`<p>Quote response: <b>${esc(r)}</b></p>`:""}${x.customer_payment_choice?`<p>Payment choice: <b>${esc(x.customer_payment_choice)}</b></p>`:""}${act}${pay}</div>`}).join("")||"<p>No requests.</p>"}
 async function respondQuote(id,response){let status=response==="accepted"?"customer_accepted":"cancelled";let {error}=await sb.from("bookings").update({quote_response:response,quote_responded_at:new Date().toISOString(),status}).eq("id",id);alert(error?error.message:(response==="accepted"?"Quote accepted. Choose payment method.":"Quote rejected."));if(!error)loadBookings()}
 async function savePaymentChoice(id){let method=$("#pay_"+id).value;if(!method){alert("Select a payment method.");return}let {error}=await sb.from("bookings").update({customer_payment_choice:method,payment_method:method,status:method==="cash"?"customer_accepted":"payment_pending"}).eq("id",id);alert(error?error.message:(method==="cash"?"Cash / pay-after-service selected.":"Payment method saved. Online payment is test mode."));if(!error)loadBookings()}
@@ -282,6 +245,30 @@ if(driverIds.length){
     `;
   }).join("")||"<p>No jobs.</p>";
 }
+async function loadAdminDriverProfiles(){
+  const box=document.getElementById("adminDriverProfilesList");if(!box)return;box.innerHTML="<p>Loading driver profiles...</p>";
+  const {data,error}=await sb.from("driver_profiles").select("*").order("created_at",{ascending:false});
+  if(error){box.innerHTML="<p>Unable to load profiles: "+esc(error.message)+"</p>";return}
+  box.innerHTML=(data||[]).map(d=>{
+    const full=[d.first_name,d.middle_name,d.last_name].filter(Boolean).join(" ")||"Name not provided";
+    const prefs=(d.job_preferences||[]).map(x=>x.replaceAll("_"," ")).join(", ")||"Not selected";
+    return `<div class="item profileReview"><div class="profileReviewHead"><div><b>${esc(full)}</b><p>Profile status: <b>${esc(d.profile_verification_status||"pending")}</b> · KYC: <b>${esc(d.verification_status||"pending")}</b></p></div><button onclick="viewDriverSelfie('${d.user_id}')">View Selfie</button></div>
+    <p><b>Current Address:</b> ${esc(d.current_address||"Not provided")}</p><p><b>Permanent Address:</b> ${esc(d.permanent_address||"Not provided")}</p>
+    <p><b>Job Preferences:</b> ${esc(prefs)}</p><p><b>Driver:</b> ${esc(d.driver_type||"-")} · <b>Licence:</b> ${esc(d.licence_classes||"-")} · <b>Experience:</b> ${esc(d.experience_years??0)} years</p>
+    <p><b>Availability:</b> ${esc(d.availability||"-")} · <b>Expected Rate:</b> ${esc(d.expected_rate||"-")}</p>
+    <div class="actions"><button class="primary" onclick="updateDriverProfileStatus('${d.user_id}','approved')">Approve Profile</button><button class="danger" onclick="updateDriverProfileStatus('${d.user_id}','rejected')">Reject Profile</button></div></div>`
+  }).join("")||"<p>No driver profiles found.</p>";
+}
+async function updateDriverProfileStatus(userId,status){
+  if(!confirm((status==="approved"?"Approve":"Reject")+" this driver profile?"))return;
+  const {error}=await sb.from("driver_profiles").update({profile_verification_status:status}).eq("user_id",userId);
+  alert(error?error.message:(status==="approved"?"Driver profile approved.":"Driver profile rejected."));if(!error)loadAdminDriverProfiles();
+}
+async function viewDriverSelfie(userId){
+  try{const {data:row,error:rerr}=await sb.from("driver_profiles").select("selfie_url").eq("user_id",userId).maybeSingle();if(rerr)throw rerr;if(!row?.selfie_url){alert("Selfie not found.");return}
+  const {data,error}=await sb.storage.from("driver-kyc-documents").createSignedUrl(row.selfie_url,300);if(error)throw error;window.open(data.signedUrl,"_blank");}catch(err){alert("Unable to open selfie: "+err.message)}
+}
+
 async function loadAdminKYC(){
   const box = document.getElementById("adminKycList");
   if(!box) return;
