@@ -85,3 +85,6 @@ body.panel-open{
 .brandMark::before{content:'🤝';font-size:25px;line-height:1;filter:saturate(1.35) contrast(1.08)}
 .brand b{color:#fff}.brand small{color:#ffb24a!important;opacity:1!important;font-weight:700}
 .helpQuick{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:14px 0}.helpQuick button{padding:14px;text-align:left;border:1px solid #e2e7ef;border-radius:12px;background:#fff;font-weight:700}.helpAnswer{padding:14px;border-radius:12px;background:#fff5dc;margin:12px 0;line-height:1.55}.helpLog{border-left:4px solid #d99a25}.supportFab{position:fixed;right:18px;bottom:18px;z-index:9000;border:0;border-radius:999px;background:#ff8a00;color:#0b1f3a;font-weight:900;padding:13px 17px;box-shadow:0 8px 24px #0003}
+
+/* Batch 4 auth/admin upgrades */
+.auth small{font-weight:400;color:#667085}.linkBtn{border:0;background:transparent;text-decoration:underline;padding:10px 0;cursor:pointer}.auth textarea{min-height:70px}#supportPendingBadge{margin-left:6px}
