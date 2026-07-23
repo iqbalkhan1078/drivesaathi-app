@@ -91,3 +91,6 @@ body.panel-open{
 
 /* ===== Batch 5 ===== */
 .planEditor{background:#fff8e8;border:1px solid #f0c36b;border-radius:14px;padding:16px;margin-bottom:16px}.jobCard{border-left:4px solid #d99a25}.planEditor textarea{min-height:100px}
+
+/* DriveSaathi Complete Version */
+.marketFilters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 18px}.marketFilters input,.marketFilters select{width:100%;padding:12px;border:1px solid #d7dce5;border-radius:10px}.marketCount{font-weight:700;margin:10px 0}.resumeCard h3{margin:0 0 8px}.privacyBox{padding:10px 12px;background:#f5f7fb;border:1px solid #e2e6ef;border-radius:10px;margin:10px 0;font-size:13px}.currentPlan{padding:14px;border:1px solid #e3a52b;border-radius:12px;margin-bottom:14px;font-weight:700}.okText{font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap}
